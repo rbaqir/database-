@@ -4,7 +4,7 @@ import { authentication } from "../middlewares/auth.js";
 
 const messageRouter = express.Router();
 
-messageRouter.post("/send", (req, res) =>
+messageRouter.post("/send", authentication, (req, res) =>
   sendMessage(req.app.get("io"), req.app.get("onlineUsers"))(req, res)
 );
 

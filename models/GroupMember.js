@@ -9,4 +9,4 @@ export const GroupMember = sequelize.define("GroupMember", {
 
 GroupMember.belongsTo(Group, { foreignKey: "group_id" });
 GroupMember.belongsTo(User, { foreignKey: "user_id" });
-GroupMember.belongsTo(User, { as: "added_by", foreignKey: "added_id" });
+GroupMember.belongsTo(User, { as: "addedBy", foreignKey: "added_by" });

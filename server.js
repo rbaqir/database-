@@ -7,7 +7,6 @@ import { Server } from "socket.io";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 
-
 dotenv.config({
   path: "./.env",
 });
@@ -15,7 +14,12 @@ dotenv.config({
 const app = express();
 const httpServer = createServer(app);
 
-app.use(cors());
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+    credentials: true,
+  }),
+);
 app.use(helmet());
 app.use(express.json());
 app.use(cookieParser());
@@ -36,14 +40,13 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    for (const [key, value] of onlineUsers.entries()) {
-      if (value === socket.id) onlineUsers.delete(key);
+    for (const [userId, socketId] of onlineUsers.entries()) {
+      if (socketId === socket.id) onlineUsers.delete(userId);
     }
 
     console.log("User disconnected:", socket.id);
   });
 });
-
 
 import { adminRouter } from "./routes/adminRoutes.js";
 import { authRouter } from "./routes/authRoutes.js";
@@ -54,16 +57,21 @@ import { mediaRouter } from "./routes/mediaRoutes.js";
 import { userRouter } from "./routes/userRoutes.js";
 
 import { seedRoles } from "./utils/seedRoles.js";
+import { seedDepartments } from "./utils/seedDepartments.js";
 
 app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);
 app.use("/api/groups", groupRouter);
 
-app.use("/api/messages", (req, res, next) => {
-  req.app.set("io", io);
-  req.app.set("onlineUsers", onlineUsers);
-  next();
-}, messageRouter);
+app.use(
+  "/api/messages",
+  (req, res, next) => {
+    req.app.set("io", io);
+    req.app.set("onlineUsers", onlineUsers);
+    next();
+  },
+  messageRouter,
+);
 
 app.use("/api/notifications", notificationRouter);
 app.use("/api/media", mediaRouter);
@@ -76,9 +84,9 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-sequelize.sync({ force: true }).then(() => {
-  seedRoles();
-
+sequelize.sync({ alter: true }).then(async () => {
+  await seedRoles();
+  await seedDepartments();
   httpServer.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
   });

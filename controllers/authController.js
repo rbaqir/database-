@@ -25,17 +25,13 @@ const login = AsyncHandler(async (req, res) => {
   res.cookie("accessToken", accessToken, accessTokenCookieOptions);
   res.cookie("refreshToken", refreshToken, refreshTokenCookieOptions);
 
-  res.json({ message: "Login successful" });
+  res.json({ message: "Login successful", user });
 });
 
 const logout = AsyncHandler(async (req, res) => {
-  const user = await User.findByPk(req.user.userId);
-  if (user) {
-    user.refreshToken = null;
-    await user.save();
-  }
   res.clearCookie("refreshToken");
+  res.clearCookie("accessToken");
   res.json({ message: "Logout successful" });
 });
 
-export {login, logout}
+export { login, logout };
